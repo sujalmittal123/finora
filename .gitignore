@@ -1,0 +1,28 @@
+# ==== Flutter / Dart ====
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/app/google-services.json
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/pubspec.lock
+
+# ==== Node.js / API ====
+api/node_modules/
+api/dist/
+api/.env
+api/prisma/migrations/
+api/prisma/dev.db
+api/prisma/dev.db-journal
+
+# ==== General ====
+.DS_Store
+*.log
+*.pid
+.vscode/settings.json

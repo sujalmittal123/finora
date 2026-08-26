@@ -1,0 +1,56 @@
+name: finora
+description: "A smart budget tracker application."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.8.1 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # HTTP Client
+  dio: ^5.8.0+1
+
+  # Local storage
+  hive_flutter: ^1.1.0
+  shared_preferences: ^2.3.5
+
+  # Charts
+  fl_chart: ^0.70.2
+
+  # Internationalization
+  intl: ^0.20.2
+
+  # Icons & SVG
+  flutter_svg: ^2.0.17
+  cupertino_icons: ^1.0.8
+
+  # Utils
+  equatable: ^2.0.7
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.15
+  freezed: ^3.1.0
+  json_serializable: ^6.9.5
+  riverpod_generator: ^2.6.5
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/

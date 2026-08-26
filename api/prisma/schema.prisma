@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// AccountType: CHECKING | SAVINGS | CREDIT | INVESTMENT | CASH
+// TransactionType: INCOME | EXPENSE
+// Period: WEEKLY | MONTHLY | YEARLY
+// SQLite does not support enums — stored as String
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts     Account[]
+  budgets      Budget[]
+
+  @@map("users")
+}
+
+model Account {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("CHECKING")
+  balance   Float    @default(0)
+  currency  String   @default("INR")
+  color     String   @default("#6C63FF")
+  icon      String   @default("wallet")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("accounts")
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  icon  String
+  color String
+  type  String // INCOME | EXPENSE
+
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@map("categories")
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  amount    Float
+  type      String   // INCOME | EXPENSE
+  note      String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accountId  String
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@map("transactions")
+}
+
+model Budget {
+  id        String   @id @default(cuid())
+  name      String
+  limit     Float
+  spent     Float    @default(0)
+  period    String   @default("MONTHLY") // WEEKLY | MONTHLY | YEARLY
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@map("budgets")
+}
