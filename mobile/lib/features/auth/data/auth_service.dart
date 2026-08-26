@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -27,12 +27,8 @@ class AuthService {
         return await _auth.signInWithPopup(provider);
       } else {
         // Mobile: standard GoogleSignIn flow (v7.x uses authenticate())
-        final GoogleSignInAccount? googleUser =
-            await GoogleSignIn.instance.authenticate();
-        if (googleUser == null) return null; // User cancelled
-
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
+        final googleUser = await GoogleSignIn.instance.authenticate();
+        final googleAuth = googleUser.authentication;
 
         final credential = GoogleAuthProvider.credential(
           idToken: googleAuth.idToken,

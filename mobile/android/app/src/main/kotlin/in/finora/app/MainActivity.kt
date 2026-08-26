@@ -1,4 +1,4 @@
-package in.finora.app
+package `in`.finora.app
 
 import io.flutter.embedding.android.FlutterActivity
 
