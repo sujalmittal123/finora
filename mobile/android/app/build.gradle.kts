@@ -17,7 +17,7 @@ if (keyPropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.finora.app"
+    namespace = "in.finora.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -41,7 +41,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.finora.app"
+        applicationId = "in.finora.app"
         minSdk = 23  // Required for Firebase Auth Google Sign-In
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
