@@ -1,0 +1,10 @@
+{
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Finora",
+        "supportEmail": "sujalmittal720@gmail.com"
+      }
+    }
+  }
+}
