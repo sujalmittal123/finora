@@ -96,198 +96,222 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
           // ─── Content SafeArea ─────────────────────────────────────────────
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-
-                  // ── 01 · WELCOME Micro-Tag ───────────────────────────────
-                  Text(
-                    currentStepData['tag']!,
-                    style: const TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2.5,
-                      fontFamily: 'monospace',
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
                     ),
-                  ),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 12),
 
-                  const SizedBox(height: 24),
-
-                  // ── Hero Headline (Bold Lowercase Typography) ────────────
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: Column(
-                      key: ValueKey<int>(_activeStep),
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          currentStepData['title1']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.w900,
-                            height: 1.05,
-                            letterSpacing: -1.5,
-                          ),
-                        ),
-                        Text(
-                          currentStepData['title2']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.w900,
-                            height: 1.05,
-                            letterSpacing: -1.5,
-                          ),
-                        ),
-                        Text(
-                          currentStepData['title3']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 48,
-                            fontWeight: FontWeight.w900,
-                            height: 1.05,
-                            letterSpacing: -1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ── Tagline (IN JUST 3 SECONDS.) ─────────────────────────
-                  Text(
-                    currentStepData['sub']!,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.8,
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // ── Stepper Capsule (1) (2) (3) ──────────────────────────
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildStepNumber(1),
-                        const SizedBox(width: 8),
-                        _buildStepNumber(2),
-                        const SizedBox(width: 8),
-                        _buildStepNumber(3),
-                      ],
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // ── Secondary Prompt & Description ───────────────────────
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: Column(
-                      key: ValueKey<int>(_activeStep),
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          currentStepData['descTitle']!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          currentStepData['descSub']!,
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Error Banner if any ──────────────────────────────────
-                  if (authState.hasError)
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.neonCrimson.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: AppColors.neonCrimson.withValues(alpha: 0.4),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline,
-                              color: AppColors.neonCrimson, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Sign-in failed. Please try again.',
-                              style: TextStyle(
-                                color: AppColors.neonCrimson.withValues(alpha: 0.95),
+                            // ── 01 · WELCOME Micro-Tag ───────────────────────────────
+                            Text(
+                              currentStepData['tag']!,
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
                                 fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 2.5,
+                                fontFamily: 'monospace',
                               ),
                             ),
-                          ),
-                        ],
+
+                            const SizedBox(height: 24),
+
+                            // ── Hero Headline (Bold Lowercase Typography) ────────────
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: Column(
+                                key: ValueKey<int>(_activeStep),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    currentStepData['title1']!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.05,
+                                      letterSpacing: -1.5,
+                                    ),
+                                  ),
+                                  Text(
+                                    currentStepData['title2']!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.05,
+                                      letterSpacing: -1.5,
+                                    ),
+                                  ),
+                                  Text(
+                                    currentStepData['title3']!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 48,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.05,
+                                      letterSpacing: -1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 18),
+
+                            // ── Tagline (IN JUST 3 SECONDS.) ─────────────────────────
+                            Text(
+                              currentStepData['sub']!,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.8,
+                              ),
+                            ),
+
+                            const SizedBox(height: 32),
+
+                            // ── Stepper Capsule (1) (2) (3) ──────────────────────────
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildStepNumber(1),
+                                  const SizedBox(width: 8),
+                                  _buildStepNumber(2),
+                                  const SizedBox(width: 8),
+                                  _buildStepNumber(3),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 32),
+                            const Spacer(),
+
+                            // ── Secondary Prompt & Description ───────────────────────
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: Column(
+                                key: ValueKey<int>(_activeStep),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    currentStepData['descTitle']!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    currentStepData['descSub']!,
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // ── Error Banner if any ──────────────────────────────────
+                            if (authState.hasError)
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.neonCrimson
+                                      .withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: AppColors.neonCrimson
+                                        .withValues(alpha: 0.4),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.error_outline,
+                                        color: AppColors.neonCrimson, size: 20),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        authState.error != null
+                                            ? authState.error
+                                                .toString()
+                                                .replaceAll('Exception:', '')
+                                                .trim()
+                                            : 'Sign-in failed. Please try again.',
+                                        style: TextStyle(
+                                          color: AppColors.neonCrimson
+                                              .withValues(alpha: 0.95),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            // ── Primary Action Button: "Continue with Google" ────────
+                            _GoogleSignInPillButton(
+                              isLoading: isLoading,
+                              onPressed: () async {
+                                await ref
+                                    .read(authNotifierProvider.notifier)
+                                    .signInWithGoogle();
+                              },
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // ── Disclaimer Footer ────────────────────────────────────
+                            Center(
+                              child: Text(
+                                'Your money stays yours. By continuing, you agree to our Terms & Privacy Policy.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.white.withValues(alpha: 0.45),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
                       ),
                     ),
-
-                  // ── Primary Action Button: "Continue with Google" ────────
-                  _GoogleSignInPillButton(
-                    isLoading: isLoading,
-                    onPressed: () async {
-                      await ref
-                          .read(authNotifierProvider.notifier)
-                          .signInWithGoogle();
-                    },
                   ),
-
-                  const SizedBox(height: 20),
-
-                  // ── Disclaimer Footer ────────────────────────────────────
-                  Center(
-                    child: Text(
-                      'Your money stays yours. By continuing, you agree to our Terms & Privacy Policy.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.45),
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],

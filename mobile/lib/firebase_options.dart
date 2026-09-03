@@ -27,7 +27,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCp_tjm059LMIrR2Qlt7h51xlyCLzDnu_w',
-    appId: '1:744645935730:android:3d29551860c09e6793b8eb',
+    appId: '1:744645935730:android:ae98e7c04e68cc6e93b8eb',
     messagingSenderId: '744645935730',
     projectId: 'finora-budget-app',
     storageBucket: 'finora-budget-app.firebasestorage.app',
@@ -35,7 +35,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyCp_tjm059LMIrR2Qlt7h51xlyCLzDnu_w',
-    appId: '1:744645935730:android:3d29551860c09e6793b8eb',
+    appId: '1:744645935730:web:6890f25afab98e6093b8eb',
     messagingSenderId: '744645935730',
     projectId: 'finora-budget-app',
     storageBucket: 'finora-budget-app.firebasestorage.app',
