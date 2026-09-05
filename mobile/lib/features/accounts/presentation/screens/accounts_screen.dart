@@ -55,6 +55,7 @@ class AccountsScreen extends ConsumerWidget {
                       backgroundColor: AppColors.surfaceElevated,
                       backgroundImage:
                           photoUrl != null ? NetworkImage(photoUrl) : null,
+                      onBackgroundImageError: photoUrl != null ? (_, __) {} : null,
                       child: photoUrl == null
                           ? const Icon(Icons.person,
                               color: AppColors.neonEmerald, size: 28)
