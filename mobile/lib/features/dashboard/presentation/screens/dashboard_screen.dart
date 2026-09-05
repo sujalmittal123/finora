@@ -1011,15 +1011,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.3,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              user?.email ?? 'Google Account Verified',
-              style: const TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 13,
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.neonEmerald.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.neonEmerald.withValues(alpha: 0.3),
+                ),
+              ),
+              child: const Text(
+                'Verified Member ✅',
+                style: TextStyle(
+                  color: AppColors.neonEmerald,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             const SizedBox(height: 24),

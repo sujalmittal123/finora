@@ -16,7 +16,6 @@ class AccountsScreen extends ConsumerWidget {
         NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
     final displayName = user?.displayName ?? 'Finora User';
-    final email = user?.email ?? '';
     final photoUrl = user?.photoURL;
 
     return Scaffold(
@@ -70,29 +69,25 @@ class AccountsScreen extends ConsumerWidget {
                             displayName,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            email.isNotEmpty ? email : 'Google Account Linked',
-                            style: const TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 12,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.3,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                                horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: AppColors.neonEmerald
                                   .withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.neonEmerald.withValues(alpha: 0.3),
+                              ),
                             ),
                             child: const Text(
-                              'Verified Firebase Auth ✅',
+                              'Verified Member ✅',
                               style: TextStyle(
                                 color: AppColors.neonEmerald,
                                 fontSize: 10,
