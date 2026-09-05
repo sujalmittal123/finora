@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'package:finora/features/dashboard/presentation/providers/finance_provider.dart';
 import '../providers/ai_provider.dart';
 
 class AiAssistantScreen extends ConsumerStatefulWidget {
@@ -10,14 +11,26 @@ class AiAssistantScreen extends ConsumerStatefulWidget {
   ConsumerState<AiAssistantScreen> createState() => _AiAssistantScreenState();
 }
 
-class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
+class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  late final AnimationController _orbController;
+
+  @override
+  void initState() {
+    super.initState();
+    _orbController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+  }
 
   @override
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
+    _orbController.dispose();
     super.dispose();
   }
 
@@ -52,37 +65,50 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
         backgroundColor: AppColors.background,
         title: Row(
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                gradient: AppColors.aiMagicGradient,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(
-                child: Text('🔮', style: TextStyle(fontSize: 18)),
-              ),
+            AnimatedBuilder(
+              animation: _orbController,
+              builder: (context, child) {
+                return Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: AppColors.aiMagicGradient,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.cyberViolet.withValues(
+                            alpha: 0.4 + (_orbController.value * 0.4)),
+                        blurRadius: 16 * (1 + _orbController.value),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text('🔮', style: TextStyle(fontSize: 18)),
+                  ),
+                );
+              },
             ),
             const SizedBox(width: 12),
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Nova AI Co-Pilot',
+                  'Nova AI Financial Co-Pilot',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
                 Row(
                   children: [
                     Text(
-                      'Online · Financial Advisor',
+                      'Online · Autonomous Wealth Telemetry',
                       style: TextStyle(
                         color: AppColors.neonEmerald,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'monospace',
                       ),
                     ),
                   ],
@@ -102,7 +128,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                 physics: const BouncingScrollPhysics(),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                itemCount: aiState.messages.length + (aiState.isThinking ? 1 : 0),
+                itemCount:
+                    aiState.messages.length + (aiState.isThinking ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == aiState.messages.length && aiState.isThinking) {
                     return _buildThinkingBubble();
@@ -129,7 +156,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                     child: ActionChip(
                       onPressed: () => _handleSend(prompt),
                       backgroundColor: AppColors.surfaceCard,
-                      side: const BorderSide(color: AppColors.glassBorder),
+                      side: BorderSide(
+                        color: AppColors.cyberViolet.withValues(alpha: 0.4),
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -138,7 +167,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                         style: const TextStyle(
                           color: AppColors.cyberViolet,
                           fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
@@ -167,9 +196,10 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                       ),
                       child: TextField(
                         controller: _textController,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 14),
                         decoration: const InputDecoration(
-                          hintText: 'Ask Nova anything about your money...',
+                          hintText: 'Ask Nova anything about your cashflow...',
                           hintStyle: TextStyle(
                             color: AppColors.textMuted,
                             fontSize: 13,
@@ -188,7 +218,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: AppColors.aiMagicGradient,
                       shape: BoxShape.circle,
                     ),
@@ -209,27 +239,38 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
 
   Widget _buildMessageBubble(dynamic msg) {
     final isUser = msg.isUser;
+    final hasAction = !isUser && msg.text.contains('Goa');
+
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 14),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.82,
+          maxWidth: MediaQuery.of(context).size.width * 0.84,
         ),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isUser ? AppColors.surfaceElevated : AppColors.surfaceCard,
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(isUser ? 20 : 4),
-            bottomRight: Radius.circular(isUser ? 4 : 20),
+            topLeft: const Radius.circular(22),
+            topRight: const Radius.circular(22),
+            bottomLeft: Radius.circular(isUser ? 22 : 4),
+            bottomRight: Radius.circular(isUser ? 4 : 22),
           ),
           border: Border.all(
             color: isUser
                 ? AppColors.glassBorder
-                : AppColors.cyberViolet.withValues(alpha: 0.25),
+                : AppColors.cyberViolet.withValues(alpha: 0.35),
+            width: isUser ? 1 : 1.2,
           ),
+          boxShadow: isUser
+              ? []
+              : [
+                  BoxShadow(
+                    color: AppColors.cyberViolet.withValues(alpha: 0.08),
+                    blurRadius: 16,
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +289,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                   style: const TextStyle(
                     color: AppColors.cyberViolet,
                     fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
@@ -261,6 +302,41 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                 fontWeight: FontWeight.w500,
               ),
             ),
+            if (hasAction) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    ref
+                        .read(financeProvider.notifier)
+                        .depositToVault('vault-2', 500);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: AppColors.surfaceCard,
+                        content: const Text(
+                          '⚡ Nova Executed: Stashed ₹500 into Goa Vault!',
+                          style: TextStyle(
+                            color: AppColors.neonEmerald,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.flash_on,
+                      size: 16, color: Colors.black),
+                  label: const Text('Lock ₹500 into Goa Vault ⚡'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.neonEmerald,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -277,7 +353,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
           color: AppColors.surfaceCard,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.cyberViolet.withValues(alpha: 0.2),
+            color: AppColors.cyberViolet.withValues(alpha: 0.3),
           ),
         ),
         child: const Row(
@@ -288,12 +364,13 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyberViolet),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppColors.cyberViolet),
               ),
             ),
             SizedBox(width: 10),
             Text(
-              'Nova is analyzing your spending...',
+              'Nova is simulating cashflow trajectories...',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
