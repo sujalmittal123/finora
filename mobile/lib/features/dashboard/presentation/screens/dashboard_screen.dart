@@ -469,13 +469,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 );
                               },
                               icon: const Icon(Icons.flash_on,
-                                  size: 16, color: Colors.black),
-                              label: const Text('Execute: Stash ₹300 ⚡'),
+                                  size: 15, color: Colors.black),
+                              label: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Execute: Stash ₹300 ⚡',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.neonEmerald,
                                 foregroundColor: Colors.black,
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
+                                    const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),

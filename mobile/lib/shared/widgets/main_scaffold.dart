@@ -11,10 +11,9 @@ class MainScaffold extends StatelessWidget {
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/dashboard')) return 0;
-    if (location.startsWith('/analytics')) return 1;
-    if (location.startsWith('/ai-assistant')) return 2;
-    if (location.startsWith('/vaults')) return 3;
-    if (location.startsWith('/accounts')) return 4;
+    if (location.startsWith('/split')) return 1;
+    if (location.startsWith('/tools')) return 2;
+    if (location.startsWith('/accounts')) return 3;
     return 0;
   }
 
@@ -24,15 +23,12 @@ class MainScaffold extends StatelessWidget {
         context.go('/dashboard');
         break;
       case 1:
-        context.go('/analytics');
+        context.go('/split');
         break;
       case 2:
-        context.go('/ai-assistant');
+        context.go('/tools');
         break;
       case 3:
-        context.go('/vaults');
-        break;
-      case 4:
         context.go('/accounts');
         break;
     }
@@ -49,13 +45,13 @@ class MainScaffold extends StatelessWidget {
         currentAccent = AppColors.neonEmerald;
         break;
       case 1:
-        currentAccent = AppColors.neonCyan;
-        break;
-      case 2:
         currentAccent = AppColors.cyberViolet;
         break;
-      case 3:
+      case 2:
         currentAccent = AppColors.electricAmber;
+        break;
+      case 3:
+        currentAccent = AppColors.neonCyan;
         break;
       default:
         currentAccent = AppColors.neonEmerald;
@@ -65,7 +61,7 @@ class MainScaffold extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Content
+          // Screen Content
           Positioned.fill(child: child),
 
           // ─── Floating Island Glass Navigation Capsule ─────────────────────
@@ -114,9 +110,9 @@ class MainScaffold extends StatelessWidget {
                       _buildNavItem(
                         index: 1,
                         currentIndex: currentIndex,
-                        icon: Icons.insights_rounded,
-                        label: '3D Burn',
-                        accentColor: AppColors.neonCyan,
+                        icon: Icons.call_split_rounded,
+                        label: 'Split',
+                        accentColor: AppColors.cyberViolet,
                         context: context,
                       ),
 
@@ -126,17 +122,17 @@ class MainScaffold extends StatelessWidget {
                       _buildNavItem(
                         index: 2,
                         currentIndex: currentIndex,
-                        icon: Icons.auto_awesome,
-                        label: 'Nova AI',
-                        accentColor: AppColors.cyberViolet,
+                        icon: Icons.category_rounded,
+                        label: 'Tools',
+                        accentColor: AppColors.electricAmber,
                         context: context,
                       ),
                       _buildNavItem(
                         index: 3,
                         currentIndex: currentIndex,
-                        icon: Icons.savings_outlined,
-                        label: 'Vaults',
-                        accentColor: AppColors.electricAmber,
+                        icon: Icons.person_outline_rounded,
+                        label: 'Accounts',
+                        accentColor: AppColors.neonCyan,
                         context: context,
                       ),
                     ],
@@ -168,7 +164,7 @@ class MainScaffold extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.neonEmerald.withValues(alpha: 0.4),
+              color: AppColors.neonEmerald.withValues(alpha: 0.45),
               blurRadius: 16,
               spreadRadius: 2,
             ),
@@ -178,7 +174,7 @@ class MainScaffold extends StatelessWidget {
           child: Icon(
             Icons.add_rounded,
             color: Colors.black,
-            size: 28,
+            size: 30,
           ),
         ),
       ),
@@ -200,7 +196,7 @@ class MainScaffold extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withValues(alpha: 0.15)
@@ -260,7 +256,7 @@ class MainScaffold extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             const Text(
-              'QUANTUM ACTIONS ⚡',
+              'FINORA QUICK ACTIONS ⚡',
               style: TextStyle(
                 color: AppColors.neonEmerald,
                 fontSize: 12,
@@ -273,7 +269,7 @@ class MainScaffold extends StatelessWidget {
               ctx: ctx,
               icon: '💸',
               title: 'Log Instant Vibe Expense',
-              desc: 'Manual dial & split-bill logger',
+              desc: 'Dial in spend, select category & split bill',
               onTap: () {
                 Navigator.pop(ctx);
                 context.push('/transactions/add');
@@ -282,21 +278,31 @@ class MainScaffold extends StatelessWidget {
             _buildActionTile(
               ctx: ctx,
               icon: '🔮',
-              title: 'Ask Nova AI to Analyze Receipt',
-              desc: 'Autonomous spending co-pilot',
+              title: 'Ask Nova AI Co-Pilot',
+              desc: 'Autonomous financial analysis & safe-to-spend',
               onTap: () {
                 Navigator.pop(ctx);
-                context.go('/ai-assistant');
+                context.push('/ai-assistant');
+              },
+            ),
+            _buildActionTile(
+              ctx: ctx,
+              icon: '📊',
+              title: '3D Burn Analytics',
+              desc: 'Interactive cashflow time machine & concentric donut',
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push('/analytics');
               },
             ),
             _buildActionTile(
               ctx: ctx,
               icon: '🎯',
               title: 'Create Stash Goal / Vault',
-              desc: 'Gamified 3D wishlist bucket',
+              desc: 'Gamified wishlist bucket with target dates',
               onTap: () {
                 Navigator.pop(ctx);
-                context.go('/vaults');
+                context.push('/vaults');
               },
             ),
             const SizedBox(height: 12),

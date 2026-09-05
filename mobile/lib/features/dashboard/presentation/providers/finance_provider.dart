@@ -9,6 +9,10 @@ class FinanceState {
   final List<TransactionItem> transactions;
   final List<SubscriptionItem> subscriptions;
   final List<SavingsVault> vaults;
+  final List<FriendItem> friends;
+  final List<SplitGroup> groups;
+  final List<EmiItem> emis;
+  final List<PaymentMethodItem> paymentMethods;
 
   const FinanceState({
     required this.totalBalance,
@@ -18,6 +22,10 @@ class FinanceState {
     required this.transactions,
     required this.subscriptions,
     required this.vaults,
+    required this.friends,
+    required this.groups,
+    required this.emis,
+    required this.paymentMethods,
   });
 
   // Calculate today's spent amount from today's expense transactions
@@ -53,6 +61,12 @@ class FinanceState {
     return remainingForToday > 0 ? remainingForToday : 0.0;
   }
 
+  // Remaining budget
+  double get remainingMonthlyBudget {
+    final rem = monthlyBudget - monthlyExpenses;
+    return rem > 0 ? rem : 0.0;
+  }
+
   // Total monthly expenses
   double get monthlyExpenses {
     final now = DateTime.now();
@@ -62,6 +76,20 @@ class FinanceState {
             tx.date.year == now.year &&
             tx.date.month == now.month)
         .fold(0.0, (sum, tx) => sum + tx.amount);
+  }
+
+  // Total amount you are owed across all unsettled friends
+  double get totalOwedToYou {
+    return friends
+        .where((f) => !f.isSettled && f.amountOwed > 0)
+        .fold(0.0, (sum, f) => sum + f.amountOwed);
+  }
+
+  // Total amount you owe across all unsettled friends
+  double get totalYouOwe {
+    return friends
+        .where((f) => !f.isSettled && f.amountOwed < 0)
+        .fold(0.0, (sum, f) => sum + f.amountOwed.abs());
   }
 
   // Flex (Wants) vs Frugal (Needs) breakdown ratio (0.0 to 1.0)
@@ -86,6 +114,10 @@ class FinanceState {
     List<TransactionItem>? transactions,
     List<SubscriptionItem>? subscriptions,
     List<SavingsVault>? vaults,
+    List<FriendItem>? friends,
+    List<SplitGroup>? groups,
+    List<EmiItem>? emis,
+    List<PaymentMethodItem>? paymentMethods,
   }) {
     return FinanceState(
       totalBalance: totalBalance ?? this.totalBalance,
@@ -95,6 +127,10 @@ class FinanceState {
       transactions: transactions ?? this.transactions,
       subscriptions: subscriptions ?? this.subscriptions,
       vaults: vaults ?? this.vaults,
+      friends: friends ?? this.friends,
+      groups: groups ?? this.groups,
+      emis: emis ?? this.emis,
+      paymentMethods: paymentMethods ?? this.paymentMethods,
     );
   }
 }
@@ -221,7 +257,196 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
           targetDate: now.add(const Duration(days: 180)),
         ),
       ],
+      friends: [
+        FriendItem(
+          id: 'friend-1',
+          name: 'Aryan Sharma',
+          avatarInitial: 'A',
+          amountOwed: 450.00, // Aryan owes user ₹450
+          lastActivity: 'Midnight Pizza split',
+        ),
+        FriendItem(
+          id: 'friend-2',
+          name: 'Tanya Mehta',
+          avatarInitial: 'T',
+          amountOwed: -220.00, // User owes Tanya ₹220
+          lastActivity: 'Blue Tokai cold brew',
+        ),
+        FriendItem(
+          id: 'friend-3',
+          name: 'Rohan Verma',
+          avatarInitial: 'R',
+          amountOwed: 890.00,
+          lastActivity: 'Elden Ring DLC pass',
+        ),
+      ],
+      groups: [
+        SplitGroup(
+          id: 'grp-1',
+          name: 'Goa Weekend Gang 🏖️',
+          emoji: '🏖️',
+          totalSpend: 18400.00,
+          yourShare: 4600.00,
+          memberNames: ['You', 'Aryan', 'Tanya', 'Rohan'],
+        ),
+        SplitGroup(
+          id: 'grp-2',
+          name: 'Flat 402 Utilities 🏠',
+          emoji: '🏠',
+          totalSpend: 6200.00,
+          yourShare: 2066.00,
+          memberNames: ['You', 'Aryan', 'Sameer'],
+        ),
+      ],
+      emis: [
+        EmiItem(
+          id: 'emi-1',
+          title: 'iPhone 16 Pro (No Cost EMI)',
+          totalAmount: 119900.00,
+          monthlyAmount: 9990.00,
+          paidMonths: 4,
+          totalMonths: 12,
+          nextDueDate: now.add(const Duration(days: 11)),
+          bankName: 'HDFC Bank',
+        ),
+        EmiItem(
+          id: 'emi-2',
+          title: 'Dyson Airwrap Stash',
+          totalAmount: 45900.00,
+          monthlyAmount: 7650.00,
+          paidMonths: 2,
+          totalMonths: 6,
+          nextDueDate: now.add(const Duration(days: 22)),
+          bankName: 'OneCard Metal',
+        ),
+      ],
+      paymentMethods: [
+        PaymentMethodItem(
+          id: 'pm-1',
+          name: 'HDFC Salary Platinum',
+          type: 'Debit',
+          last4Digits: '8492',
+          cardBrand: 'Visa',
+          monthlyLimit: 100000.00,
+          currentSpent: 24500.00,
+          isDefault: true,
+        ),
+        PaymentMethodItem(
+          id: 'pm-2',
+          name: 'OneCard Metal Credit',
+          type: 'Credit',
+          last4Digits: '1923',
+          cardBrand: 'Mastercard',
+          monthlyLimit: 75000.00,
+          currentSpent: 18490.00,
+          isDefault: false,
+        ),
+        PaymentMethodItem(
+          id: 'pm-3',
+          name: 'UPI Primary (sujal@okhdfcbank)',
+          type: 'UPI',
+          last4Digits: 'UPI',
+          cardBrand: 'UPI',
+          monthlyLimit: 50000.00,
+          currentSpent: 9200.00,
+          isDefault: false,
+        ),
+      ],
     );
+  }
+
+  void updateMonthlyBudget(double newBudget) {
+    state = state.copyWith(monthlyBudget: newBudget);
+  }
+
+  void addFriend({
+    required String name,
+    double initialAmount = 0.0,
+  }) {
+    final newFriend = FriendItem(
+      id: 'friend-${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      avatarInitial: name.isNotEmpty ? name[0].toUpperCase() : 'F',
+      amountOwed: initialAmount,
+      lastActivity: 'Added recently',
+    );
+    state = state.copyWith(friends: [...state.friends, newFriend]);
+  }
+
+  void settleFriendDebt(String friendId) {
+    final updated = state.friends.map((f) {
+      if (f.id == friendId) {
+        return f.copyWith(amountOwed: 0.0, isSettled: true);
+      }
+      return f;
+    }).toList();
+    state = state.copyWith(friends: updated);
+  }
+
+  void createGroup({
+    required String name,
+    required String emoji,
+    required List<String> members,
+    required double initialSpend,
+  }) {
+    final newGroup = SplitGroup(
+      id: 'grp-${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      emoji: emoji,
+      totalSpend: initialSpend,
+      yourShare: members.isNotEmpty ? initialSpend / members.length : 0,
+      memberNames: members,
+    );
+    state = state.copyWith(groups: [...state.groups, newGroup]);
+  }
+
+  void addEmi({
+    required String title,
+    required double totalAmount,
+    required double monthlyAmount,
+    required int totalMonths,
+    required String bankName,
+  }) {
+    final newEmi = EmiItem(
+      id: 'emi-${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      totalAmount: totalAmount,
+      monthlyAmount: monthlyAmount,
+      paidMonths: 0,
+      totalMonths: totalMonths,
+      nextDueDate: DateTime.now().add(const Duration(days: 30)),
+      bankName: bankName,
+    );
+    state = state.copyWith(emis: [...state.emis, newEmi]);
+  }
+
+  void payEmiInstallment(String emiId) {
+    final updated = state.emis.map((emi) {
+      if (emi.id == emiId && emi.paidMonths < emi.totalMonths) {
+        return emi.copyWith(paidMonths: emi.paidMonths + 1);
+      }
+      return emi;
+    }).toList();
+    state = state.copyWith(emis: updated);
+  }
+
+  void addPaymentMethod({
+    required String name,
+    required String type,
+    required String last4,
+    required String cardBrand,
+    required double limit,
+  }) {
+    final newPm = PaymentMethodItem(
+      id: 'pm-${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      type: type,
+      last4Digits: last4,
+      cardBrand: cardBrand,
+      monthlyLimit: limit,
+      currentSpent: 0.0,
+    );
+    state = state.copyWith(paymentMethods: [...state.paymentMethods, newPm]);
   }
 
   void addTransaction({
