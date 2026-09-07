@@ -706,7 +706,7 @@ class _SplitHubScreenState extends ConsumerState<SplitHubScreen> {
               trailing: Switch(
                 value: true,
                 onChanged: (_) {},
-                activeColor: AppColors.neonEmerald,
+                activeThumbColor: AppColors.neonEmerald,
               ),
             ),
           ],

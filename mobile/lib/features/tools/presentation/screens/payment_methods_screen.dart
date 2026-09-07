@@ -292,7 +292,7 @@ class PaymentMethodsScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: type,
+                      initialValue: type,
                       dropdownColor: AppColors.surfaceElevated,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(labelText: 'Type'),

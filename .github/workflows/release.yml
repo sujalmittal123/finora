@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'   # triggers on v1.0.0, v1.2.3, etc.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.1.1)'
+        required: false
+        default: ''
 
 jobs:
   build-android:
@@ -28,7 +34,6 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.5'
           channel: stable
           cache: true
 
@@ -79,9 +84,23 @@ jobs:
       # ── 10. Extract version from tag ─────────────────────────────────────────
       - name: Extract version
         id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
 
-      # ── 11. Create GitHub Release ────────────────────────────────────────────
+      # ── 11. Rename artifacts for clarity ────────────────────────────────────
+      - name: Rename artifacts
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk \
+             "finora-${VERSION}.apk"
+          cp mobile/build/app/outputs/bundle/release/app-release.aab \
+             "finora-${VERSION}.aab"
+
+      # ── 12. Create GitHub Release ────────────────────────────────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -99,18 +118,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            mobile/build/app/outputs/flutter-apk/app-release.apk
-            mobile/build/app/outputs/bundle/release/app-release.aab
+            finora-${{ steps.version.outputs.VERSION }}.apk
+            finora-${{ steps.version.outputs.VERSION }}.aab
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      # ── 12. Rename artifacts for clarity ────────────────────────────────────
-      - name: Rename artifacts
-        run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          cp mobile/build/app/outputs/flutter-apk/app-release.apk \
-             "finora-${VERSION}.apk"
-          cp mobile/build/app/outputs/bundle/release/app-release.aab \
-             "finora-${VERSION}.aab"
 
       # ── 13. Upload artifacts to workflow run ─────────────────────────────────
       - name: Upload APK artifact
