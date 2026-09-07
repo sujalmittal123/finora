@@ -125,18 +125,29 @@ class AiNotifier extends StateNotifier<AiState> {
         query.contains('where') ||
         query.contains('subscription')) {
       final subCount = financeState.subscriptions.length;
+      if (subCount == 0) {
+        return "🧛 **No vampire leaks yet!**\n\nYou don't have any subscriptions tracked. Add them from Tools → Subscriptions and I'll start hunting for leaks 🔎";
+      }
       final subTotal = financeState.subscriptions
           .fold(0.0, (sum, item) => sum + item.amount);
-      return "🧛 **Vampire Leaks Detected:**\n\nYou have **$subCount active subscriptions** draining **₹${subTotal.toStringAsFixed(0)}/month** automatically.\n\n- **Netflix 4K**: Renews in 2 days (₹649)\n- **Cult.fit Gym**: Renews in 14 days (₹1,800)\n\nCutting just 1 unused streaming sub adds ₹7,800/yr straight to your tech vault!";
+      final subLines = financeState.subscriptions
+          .take(2)
+          .map((s) => '- **${s.name}**: ${s.amount.toStringAsFixed(0)}/mo')
+          .join('\n');
+      return "🧛 **Vampire Leaks Detected:**\n\nYou have **$subCount active subscriptions** draining **₹${subTotal.toStringAsFixed(0)}/month** automatically.\n\n$subLines\n\nCutting just 1 unused subscription adds serious savings back to your stash!";
     } else if (query.contains('goa') ||
         query.contains('trip') ||
         query.contains('save')) {
+      if (financeState.vaults.isEmpty) {
+        return "🎯 **No savings vaults yet!**\n\nCreate your first savings goal from the Vaults tab and I'll help you track progress toward it.";
+      }
       final goaVault = financeState.vaults.firstWhere(
-        (v) => v.title.toLowerCase().contains('goa'),
+        (v) => v.title.toLowerCase().contains('goa') ||
+            v.title.toLowerCase().contains('trip'),
         orElse: () => financeState.vaults.first,
       );
       final pct = (goaVault.progressPercentage * 100).toStringAsFixed(0);
-      return "🏖️ **${goaVault.title} Progress: $pct% Complete**\n\nYou have saved **₹${goaVault.currentAmount.toStringAsFixed(0)}** of **₹${goaVault.targetAmount.toStringAsFixed(0)}**.\n\n⚡ *Speed-Up Strategy*: Auto-deposit ₹500 every Monday and split cab rides with friends to reach 100% by next month!";
+      return "🏖️ **${goaVault.title} Progress: $pct% Complete**\n\nYou have saved **₹${goaVault.currentAmount.toStringAsFixed(0)}** of **₹${goaVault.targetAmount.toStringAsFixed(0)}**.\n\n⚡ *Speed-Up Strategy*: Small daily deposits and splitting costs with friends get you to 100% faster!";
     } else {
       return "📊 **Financial Snapshot:**\n\n• **Safe to Spend Today**: ₹${safeToSpend.toStringAsFixed(0)}\n• **Total Stash**: ₹${totalBalance.toStringAsFixed(0)}\n• **Active Streak**: ${financeState.streakDays} Days 🔥\n\nYou are in the top 15% of mindful spenders this week! Keep the momentum going.";
     }

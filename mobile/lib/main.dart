@@ -15,6 +15,7 @@ void main() async {
 
   // Initialize Hive local storage
   await Hive.initFlutter();
+  await Hive.openBox('finora_state');
 
   runApp(
     const ProviderScope(

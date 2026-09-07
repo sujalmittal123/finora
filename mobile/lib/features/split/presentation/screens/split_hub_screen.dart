@@ -516,7 +516,7 @@ class _SplitHubScreenState extends ConsumerState<SplitHubScreen> {
     final nameCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
@@ -589,7 +589,7 @@ class _SplitHubScreenState extends ConsumerState<SplitHubScreen> {
     final membersCtrl = TextEditingController();
     final spendCtrl = TextEditingController();
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
@@ -673,7 +673,7 @@ class _SplitHubScreenState extends ConsumerState<SplitHubScreen> {
   }
 
   void _showSplitSettings(BuildContext context) {
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(

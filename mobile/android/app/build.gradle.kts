@@ -42,7 +42,7 @@ android {
 
     defaultConfig {
         applicationId = "in.finora.app"
-        minSdk = 23  // Required for Firebase Auth Google Sign-In
+        minSdk = flutter.minSdkVersion  // Required for Firebase Auth Google Sign-In
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

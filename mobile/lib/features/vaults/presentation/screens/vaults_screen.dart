@@ -255,7 +255,7 @@ class VaultsScreen extends ConsumerWidget {
     final amountCtrl = TextEditingController();
     String selectedEmoji = '🎧';
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,

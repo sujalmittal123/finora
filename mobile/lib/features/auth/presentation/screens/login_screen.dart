@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../providers/guest_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -16,7 +18,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   late final AnimationController _ambientController;
   late final AnimationController _glowSweepController;
   int _activeStep = 1;
-  double _demoMonthlyIncome = 65000;
 
   final List<Map<String, dynamic>> _onboardingSlides = [
     {
@@ -83,9 +84,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final isLoading = authState.isLoading;
     final currentSlide = _onboardingSlides[_activeStep - 1];
     final accentColor = currentSlide['accentColor'] as Color;
-
-    // Computed demo daily allowance for interactive simulator
-    final demoDailySafe = (_demoMonthlyIncome * 0.65) / 30;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -292,94 +290,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             ),
 
                             const SizedBox(height: 20),
-
-                            // ── Interactive "Taste the Safe-to-Spend" Dial ──
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceCard.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(22),
-                                border: Border.all(
-                                  color: accentColor.withValues(alpha: 0.3),
-                                  width: 1.2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: accentColor.withValues(alpha: 0.08),
-                                    blurRadius: 24,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(Icons.auto_awesome,
-                                              color: accentColor, size: 16),
-                                          const SizedBox(width: 6),
-                                          const Text(
-                                            'INTERACTIVE SIMULATOR',
-                                            style: TextStyle(
-                                              color: AppColors.textMuted,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w800,
-                                              letterSpacing: 1.2,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Text(
-                                        '₹${demoDailySafe.toStringAsFixed(0)}/day safe',
-                                        style: TextStyle(
-                                          color: accentColor,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Drag monthly inflow to test daily allowance: ₹${_demoMonthlyIncome.toStringAsFixed(0)}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  SliderTheme(
-                                    data: SliderThemeData(
-                                      activeTrackColor: accentColor,
-                                      inactiveTrackColor:
-                                          AppColors.surfaceElevated,
-                                      thumbColor: Colors.white,
-                                      overlayColor: accentColor
-                                          .withValues(alpha: 0.2),
-                                      trackHeight: 4,
-                                      thumbShape: const RoundSliderThumbShape(
-                                          enabledThumbRadius: 7),
-                                    ),
-                                    child: Slider(
-                                      value: _demoMonthlyIncome,
-                                      min: 20000,
-                                      max: 200000,
-                                      divisions: 36,
-                                      onChanged: (val) {
-                                        setState(() => _demoMonthlyIncome = val);
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 20),
                             const Spacer(),
 
                             // ── Secondary Prompt & Description ───────────────
@@ -464,6 +374,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               },
                             ),
 
+                            const SizedBox(height: 14),
+
+                            // ── Guest Mode ──────────────────────────────────
+                            Center(
+                              child: TextButton.icon(
+                                onPressed: () {
+                                  ref
+                                      .read(guestModeProvider.notifier)
+                                      .enterGuestMode();
+                                },
+                                icon: const Icon(Icons.bolt_rounded,
+                                    color: AppColors.textSecondary, size: 16),
+                                label: const Text(
+                                  'Continue as Guest (offline demo)',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            // ── Register Prompt ─────────────────────────────
+                            Center(
+                              child: GestureDetector(
+                                onTap: () => context.go('/register'),
+                                child: const Text(
+                                  'New here? Create an account',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 14),
 
                             // ── Disclaimer Footer ────────────────────────────

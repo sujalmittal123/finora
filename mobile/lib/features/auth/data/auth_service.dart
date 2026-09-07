@@ -46,6 +46,37 @@ class AuthService {
     }
   }
 
+  /// Sign up with email + password, then set the display name.
+  Future<UserCredential> registerWithEmail({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    await credential.user?.updateDisplayName(name.trim());
+    return credential;
+  }
+
+  /// Updates the Firebase profile (best-effort; safe when signed out).
+  Future<void> updateProfile({
+    required String name,
+    String? photoUrl,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    try {
+      await user.updateDisplayName(name);
+      if (photoUrl != null && photoUrl.isNotEmpty) {
+        await user.updatePhotoURL(photoUrl);
+      }
+    } catch (e) {
+      debugPrint('Profile update failed: $e');
+    }
+  }
+
   /// Sign out from both Firebase and Google
   Future<void> signOut() async {
     try {

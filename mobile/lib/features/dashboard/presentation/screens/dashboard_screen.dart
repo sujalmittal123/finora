@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/models/financial_models.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/providers/guest_provider.dart';
+import '../../../auth/presentation/providers/profile_provider.dart';
 import '../providers/finance_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -36,12 +38,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authStateProvider).valueOrNull;
+    final profile = ref.watch(profileProvider);
     final finance = ref.watch(financeProvider);
     final currencyFormatter =
         NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
-    final displayName = user?.displayName ?? 'Operator';
+    final displayName = profile.name.isNotEmpty
+        ? profile.name
+        : (user?.displayName ?? 'Operator');
     final firstName = displayName.split(' ').first;
+    final profilePhoto = profile.photoUrl.isNotEmpty
+        ? profile.photoUrl
+        : user?.photoURL;
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'good morning'
+        : hour < 17
+            ? 'good afternoon'
+            : 'good evening';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -83,16 +97,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             child: CircleAvatar(
                               radius: 20,
                               backgroundColor: AppColors.surfaceElevated,
-                              child: Text(
-                                firstName.isNotEmpty
-                                    ? firstName[0].toUpperCase()
-                                    : 'F',
-                                style: const TextStyle(
-                                  color: AppColors.neonEmerald,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                ),
-                              ),
+                              backgroundImage: profilePhoto != null
+                                  ? NetworkImage(profilePhoto)
+                                  : null,
+                              onBackgroundImageError:
+                                  profilePhoto != null ? (_, __) {} : null,
+                              child: profilePhoto == null
+                                  ? Text(
+                                      firstName.isNotEmpty
+                                          ? firstName[0].toUpperCase()
+                                          : 'F',
+                                      style: const TextStyle(
+                                        color: AppColors.neonEmerald,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 16,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           ),
                         ),
@@ -125,7 +146,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'gm, ${firstName.toLowerCase()}',
+                              '$greeting, ${firstName.toLowerCase()}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -267,20 +288,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             const SizedBox(height: 16),
 
                             // Currency Main Dial Number
-                            Text(
-                              currencyFormatter.format(finance.safeToSpendToday),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 44,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -1.8,
-                                height: 1.0,
-                                shadows: [
-                                  Shadow(
-                                    color: AppColors.neonEmerald,
-                                    blurRadius: 28,
-                                  ),
-                                ],
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                currencyFormatter.format(finance.safeToSpendToday),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 44,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: -1.8,
+                                  height: 1.0,
+                                  shadows: [
+                                    Shadow(
+                                      color: AppColors.neonEmerald,
+                                      blurRadius: 28,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
 
@@ -324,33 +349,39 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  _buildHoloStat(
-                                    label: 'Total Liquid Stash',
-                                    value: currencyFormatter
-                                        .format(finance.totalBalance),
-                                    color: AppColors.neonCyan,
+                                  Expanded(
+                                    child: _buildHoloStat(
+                                      label: 'Total Liquid Stash',
+                                      value: currencyFormatter
+                                          .format(finance.totalBalance),
+                                      color: AppColors.neonCyan,
+                                    ),
                                   ),
                                   Container(
                                     width: 1,
                                     height: 28,
                                     color: AppColors.divider,
                                   ),
-                                  _buildHoloStat(
-                                    label: 'Burn Velocity',
-                                    value: currencyFormatter
-                                        .format(finance.monthlyExpenses),
-                                    color: AppColors.neonCrimson,
+                                  Expanded(
+                                    child: _buildHoloStat(
+                                      label: 'Burn Velocity',
+                                      value: currencyFormatter
+                                          .format(finance.monthlyExpenses),
+                                      color: AppColors.neonCrimson,
+                                    ),
                                   ),
                                   Container(
                                     width: 1,
                                     height: 28,
                                     color: AppColors.divider,
                                   ),
-                                  _buildHoloStat(
-                                    label: 'Monthly Target',
-                                    value: currencyFormatter
-                                        .format(finance.monthlyBudget),
-                                    color: Colors.white,
+                                  Expanded(
+                                    child: _buildHoloStat(
+                                      label: 'Monthly Target',
+                                      value: currencyFormatter
+                                          .format(finance.monthlyBudget),
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -415,11 +446,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
+                                const Text(
                                   'NOVA AI PREDICTIVE TWIN',
                                   style: TextStyle(
                                     color: AppColors.cyberViolet,
@@ -428,10 +459,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     letterSpacing: 1.2,
                                   ),
                                 ),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Text(
-                                  'You\'re ₹320 under budget today! Lock ₹300 into Goa Vault now to finish 4 days early.',
-                                  style: TextStyle(
+                                  profile.novaMessage.trim().isNotEmpty
+                                      ? profile.novaMessage.trim()
+                                      : finance.vaults.isEmpty
+                                          ? 'Your vaults are empty. Set a savings goal to unlock Nova predictions.'
+                                          : 'You\'re ₹${finance.remainingMonthlyBudget.toStringAsFixed(0)} under budget this month. Keep the streak going!',
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -439,6 +476,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 ),
                               ],
                             ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined,
+                                color: AppColors.cyberViolet, size: 16),
+                            tooltip: 'Write your own message',
+                            onPressed: () =>
+                                _editNovaMessage(context, ref, profile),
                           ),
                         ],
                       ),
@@ -448,9 +492,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {
+                                final vaults = finance.vaults;
+                                if (vaults.isEmpty) {
+                                  context.go('/vaults');
+                                  return;
+                                }
                                 ref
                                     .read(financeProvider.notifier)
-                                    .depositToVault('vault-2', 300);
+                                    .depositToVault(vaults.first.id, 300);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     backgroundColor: AppColors.surfaceCard,
@@ -458,9 +507,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(14)),
-                                    content: const Text(
-                                      '⚡ Stashed ₹300 into Goa Vault! Nova predictive target updated.',
-                                      style: TextStyle(
+                                    content: Text(
+                                      '⚡ Stashed ₹300 into ${vaults.first.title}! Nova predictive target updated.',
+                                      style: const TextStyle(
                                         color: AppColors.neonEmerald,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -833,12 +882,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       padding: const EdgeInsets.only(right: 10),
       child: InkWell(
         onTap: () {
+          final accounts = ref.read(financeProvider).accounts;
           ref.read(financeProvider.notifier).addTransaction(
                 title: '$emoji $label Quick Add',
                 amount: amount,
                 category: category,
                 isExpense: true,
-                accountName: 'UPI',
+                accountName:
+                    accounts.isNotEmpty ? accounts.first.name : 'Main Account',
               );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -968,12 +1019,70 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
+  void _editNovaMessage(
+      BuildContext context, WidgetRef ref, ProfileData profile) {
+    final ctrl = TextEditingController(text: profile.novaMessage);
+    showDialog(useRootNavigator: true, 
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceCard,
+        title: const Text(
+          'Write your Nova message',
+          style: TextStyle(color: Colors.white, fontSize: 17),
+        ),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 3,
+          maxLength: 160,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'e.g. "Save ₹500 today — you got this!"',
+            hintStyle: const TextStyle(color: AppColors.textMuted),
+            filled: true,
+            fillColor: AppColors.surfaceElevated,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              ref
+                  .read(profileProvider.notifier)
+                  .updateProfile(novaMessage: '');
+              Navigator.pop(ctx);
+            },
+            child: const Text('Reset',
+                style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel',
+                style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              ref
+                  .read(profileProvider.notifier)
+                  .updateProfile(novaMessage: ctrl.text);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Save',
+                style: TextStyle(color: AppColors.neonEmerald)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showProfileMenu(BuildContext context, WidgetRef ref) {
     final user = ref.read(authStateProvider).valueOrNull;
     final displayName = user?.displayName ?? 'Finora Operator';
     final firstName = displayName.split(' ').first;
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
@@ -1046,7 +1155,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
               onTap: () async {
                 Navigator.pop(ctx);
-                await ref.read(authNotifierProvider.notifier).signOut();
+                if (ref.read(guestModeProvider)) {
+                  ref.read(guestModeProvider.notifier).exitGuestMode();
+                } else {
+                  await ref.read(authNotifierProvider.notifier).signOut();
+                }
               },
             ),
           ],

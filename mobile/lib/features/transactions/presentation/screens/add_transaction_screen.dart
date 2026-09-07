@@ -19,10 +19,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   final TextEditingController _splitController = TextEditingController();
   VibeCategory _selectedCategory = VibeCategory.caffeine;
   bool _isExpense = true;
-  String _selectedAccount = 'HDFC UPI';
+  String _selectedAccount = 'Main Account';
   bool _showSplitField = false;
-
-  final List<String> _accounts = ['HDFC UPI', 'Credit Card', 'Cash Stash'];
 
   @override
   void dispose() {
@@ -82,6 +80,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final finance = ref.watch(financeProvider);
+    final accounts = finance.accounts.isEmpty
+        ? ['Main Account']
+        : finance.accounts.map((a) => a.name).toList();
+    final effectiveAccount = accounts.contains(_selectedAccount)
+        ? _selectedAccount
+        : accounts.first;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -250,14 +256,14 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
-                                value: _selectedAccount,
+                                value: effectiveAccount,
                                 dropdownColor: AppColors.surfaceElevated,
                                 icon: const Icon(Icons.keyboard_arrow_down,
                                     color: AppColors.textSecondary),
                                 style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600),
-                                items: _accounts.map((acc) {
+                                items: accounts.map((acc) {
                                   return DropdownMenuItem(
                                     value: acc,
                                     child: Text(acc),

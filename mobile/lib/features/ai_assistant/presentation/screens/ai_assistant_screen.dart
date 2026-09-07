@@ -102,13 +102,18 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 ),
                 Row(
                   children: [
-                    Text(
-                      'Online · Autonomous Wealth Telemetry',
-                      style: TextStyle(
-                        color: AppColors.neonEmerald,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'monospace',
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Online · Autonomous Wealth Telemetry',
+                          style: TextStyle(
+                            color: AppColors.neonEmerald,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -239,7 +244,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
 
   Widget _buildMessageBubble(dynamic msg) {
     final isUser = msg.isUser;
-    final hasAction = !isUser && msg.text.contains('Goa');
+    final vaults = ref.read(financeProvider).vaults;
+    final hasAction = !isUser && vaults.isNotEmpty && msg.text.contains('Goa');
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -310,13 +316,13 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                   onPressed: () {
                     ref
                         .read(financeProvider.notifier)
-                        .depositToVault('vault-2', 500);
+                        .depositToVault(vaults.first.id, 500);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         backgroundColor: AppColors.surfaceCard,
-                        content: const Text(
-                          '⚡ Nova Executed: Stashed ₹500 into Goa Vault!',
-                          style: TextStyle(
+                        content: Text(
+                          '⚡ Nova Executed: Stashed ₹500 into ${vaults.first.title}!',
+                          style: const TextStyle(
                             color: AppColors.neonEmerald,
                             fontWeight: FontWeight.w800,
                           ),
@@ -326,7 +332,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                   },
                   icon: const Icon(Icons.flash_on,
                       size: 16, color: Colors.black),
-                  label: const Text('Lock ₹500 into Goa Vault ⚡'),
+                  label: Text('Lock ₹500 into ${vaults.first.title} ⚡'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.neonEmerald,
                     foregroundColor: Colors.black,

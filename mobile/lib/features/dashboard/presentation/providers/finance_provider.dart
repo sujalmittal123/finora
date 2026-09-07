@@ -1,5 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import '../../../../shared/models/financial_models.dart';
+
+const String _financeBoxName = 'finora_state';
+const String _financeKey = 'finance';
 
 class FinanceState {
   final double totalBalance;
@@ -13,6 +20,9 @@ class FinanceState {
   final List<SplitGroup> groups;
   final List<EmiItem> emis;
   final List<PaymentMethodItem> paymentMethods;
+  final List<AccountItem> accounts;
+  final List<BudgetItem> budgets;
+  final bool hasCompletedSetup;
 
   const FinanceState({
     required this.totalBalance,
@@ -26,7 +36,27 @@ class FinanceState {
     required this.groups,
     required this.emis,
     required this.paymentMethods,
+    this.accounts = const [],
+    this.budgets = const [],
+    this.hasCompletedSetup = false,
   });
+
+  /// Fresh state with no data — everything starts at zero.
+  factory FinanceState.empty() {
+    return const FinanceState(
+      totalBalance: 0.0,
+      monthlyIncome: 0.0,
+      monthlyBudget: 0.0,
+      streakDays: 0,
+      transactions: [],
+      subscriptions: [],
+      vaults: [],
+      friends: [],
+      groups: [],
+      emis: [],
+      paymentMethods: [],
+    );
+  }
 
   // Calculate today's spent amount from today's expense transactions
   double get todaySpent {
@@ -106,6 +136,17 @@ class FinanceState {
     return flexExpenses / monthlyExpenses;
   }
 
+  double spentInCategory(VibeCategory category) {
+    final now = DateTime.now();
+    return transactions
+        .where((tx) =>
+            tx.isExpense &&
+            tx.category == category &&
+            tx.date.year == now.year &&
+            tx.date.month == now.month)
+        .fold(0.0, (sum, tx) => sum + tx.amount);
+  }
+
   FinanceState copyWith({
     double? totalBalance,
     double? monthlyIncome,
@@ -118,6 +159,9 @@ class FinanceState {
     List<SplitGroup>? groups,
     List<EmiItem>? emis,
     List<PaymentMethodItem>? paymentMethods,
+    List<AccountItem>? accounts,
+    List<BudgetItem>? budgets,
+    bool? hasCompletedSetup,
   }) {
     return FinanceState(
       totalBalance: totalBalance ?? this.totalBalance,
@@ -131,232 +175,111 @@ class FinanceState {
       groups: groups ?? this.groups,
       emis: emis ?? this.emis,
       paymentMethods: paymentMethods ?? this.paymentMethods,
+      accounts: accounts ?? this.accounts,
+      budgets: budgets ?? this.budgets,
+      hasCompletedSetup: hasCompletedSetup ?? this.hasCompletedSetup,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'totalBalance': totalBalance,
+        'monthlyIncome': monthlyIncome,
+        'monthlyBudget': monthlyBudget,
+        'streakDays': streakDays,
+        'transactions': transactions.map((e) => e.toJson()).toList(),
+        'subscriptions': subscriptions.map((e) => e.toJson()).toList(),
+        'vaults': vaults.map((e) => e.toJson()).toList(),
+        'friends': friends.map((e) => e.toJson()).toList(),
+        'groups': groups.map((e) => e.toJson()).toList(),
+        'emis': emis.map((e) => e.toJson()).toList(),
+        'paymentMethods': paymentMethods.map((e) => e.toJson()).toList(),
+        'accounts': accounts.map((e) => e.toJson()).toList(),
+        'budgets': budgets.map((e) => e.toJson()).toList(),
+        'hasCompletedSetup': hasCompletedSetup,
+      };
+
+  factory FinanceState.fromJson(Map<String, dynamic> json) {
+    List<T> parseList<T>(String key, T Function(Map<String, dynamic>) fromJson) {
+      return (json[key] as List<dynamic>? ?? [])
+          .map((e) => fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+
+    return FinanceState(
+      totalBalance: (json['totalBalance'] as num?)?.toDouble() ?? 0.0,
+      monthlyIncome: (json['monthlyIncome'] as num?)?.toDouble() ?? 0.0,
+      monthlyBudget: (json['monthlyBudget'] as num?)?.toDouble() ?? 0.0,
+      streakDays: (json['streakDays'] as num?)?.toInt() ?? 0,
+      transactions:
+          parseList('transactions', TransactionItem.fromJson),
+      subscriptions:
+          parseList('subscriptions', SubscriptionItem.fromJson),
+      vaults: parseList('vaults', SavingsVault.fromJson),
+      friends: parseList('friends', FriendItem.fromJson),
+      groups: parseList('groups', SplitGroup.fromJson),
+      emis: parseList('emis', EmiItem.fromJson),
+      paymentMethods: parseList('paymentMethods', PaymentMethodItem.fromJson),
+      accounts: parseList('accounts', AccountItem.fromJson),
+      budgets: parseList('budgets', BudgetItem.fromJson),
+      hasCompletedSetup: json['hasCompletedSetup'] as bool? ?? false,
     );
   }
 }
 
 class FinanceNotifier extends StateNotifier<FinanceState> {
-  FinanceNotifier() : super(_initialMockData());
+  FinanceNotifier() : super(_loadState());
 
-  static FinanceState _initialMockData() {
-    final now = DateTime.now();
-    return FinanceState(
-      totalBalance: 48500.00,
-      monthlyIncome: 65000.00,
-      monthlyBudget: 42000.00,
-      streakDays: 8,
-      transactions: [
-        TransactionItem(
-          id: 'tx-1',
-          title: 'Blue Tokai Cold Brew',
-          amount: 280.00,
-          date: now.subtract(const Duration(hours: 2)),
-          category: VibeCategory.caffeine,
-          accountName: 'HDFC UPI',
-        ),
-        TransactionItem(
-          id: 'tx-2',
-          title: 'Uber to Office Hub',
-          amount: 340.00,
-          date: now.subtract(const Duration(hours: 5)),
-          category: VibeCategory.lateRides,
-          accountName: 'Credit Card',
-        ),
-        TransactionItem(
-          id: 'tx-3',
-          title: 'Steam Sale: Elden Ring',
-          amount: 1499.00,
-          date: now.subtract(const Duration(days: 1, hours: 3)),
-          category: VibeCategory.gamingSubs,
-          accountName: 'Main Account',
-        ),
-        TransactionItem(
-          id: 'tx-4',
-          title: 'Freelance Design Milestone',
-          amount: 18500.00,
-          date: now.subtract(const Duration(days: 2)),
-          category: VibeCategory.salary,
-          isExpense: false,
-          accountName: 'Main Account',
-        ),
-        TransactionItem(
-          id: 'tx-5',
-          title: 'Midnight Pizza with Gang',
-          amount: 890.00,
-          date: now.subtract(const Duration(days: 3)),
-          category: VibeCategory.midnightCraving,
-          splitWith: 'Aryan, Tanya',
-          accountName: 'HDFC UPI',
-        ),
-        TransactionItem(
-          id: 'tx-6',
-          title: 'Zara Oversized Tee',
-          amount: 2290.00,
-          date: now.subtract(const Duration(days: 4)),
-          category: VibeCategory.dopamine,
-          accountName: 'Credit Card',
-        ),
-      ],
-      subscriptions: [
-        SubscriptionItem(
-          id: 'sub-1',
-          name: 'Netflix 4K Ultra',
-          amount: 649.00,
-          billingPeriod: 'Monthly',
-          nextBillingDate: now.add(const Duration(days: 2)),
-          iconEmoji: '🎬',
-        ),
-        SubscriptionItem(
-          id: 'sub-2',
-          name: 'Spotify Premium Duo',
-          amount: 149.00,
-          billingPeriod: 'Monthly',
-          nextBillingDate: now.add(const Duration(days: 6)),
-          iconEmoji: '🎧',
-        ),
-        SubscriptionItem(
-          id: 'sub-3',
-          name: 'Cult.fit Gym & Yoga',
-          amount: 1800.00,
-          billingPeriod: 'Monthly',
-          nextBillingDate: now.add(const Duration(days: 14)),
-          iconEmoji: '💪',
-        ),
-        SubscriptionItem(
-          id: 'sub-4',
-          name: 'ChatGPT Plus Sub',
-          amount: 1999.00,
-          billingPeriod: 'Monthly',
-          nextBillingDate: now.add(const Duration(days: 19)),
-          iconEmoji: '🤖',
-        ),
-      ],
-      vaults: [
-        SavingsVault(
-          id: 'vault-1',
-          title: 'Sony WH-1000XM5 ANC',
-          targetAmount: 26990.00,
-          currentAmount: 19500.00,
-          emoji: '🎧',
-          targetDate: now.add(const Duration(days: 45)),
-        ),
-        SavingsVault(
-          id: 'vault-2',
-          title: 'Goa Weekend Trip 🏖️',
-          targetAmount: 35000.00,
-          currentAmount: 21000.00,
-          emoji: '✈️',
-          targetDate: now.add(const Duration(days: 60)),
-        ),
-        SavingsVault(
-          id: 'vault-3',
-          title: 'M3 Pro MacBook Stash',
-          targetAmount: 149000.00,
-          currentAmount: 68000.00,
-          emoji: '💻',
-          targetDate: now.add(const Duration(days: 180)),
-        ),
-      ],
-      friends: [
-        FriendItem(
-          id: 'friend-1',
-          name: 'Aryan Sharma',
-          avatarInitial: 'A',
-          amountOwed: 450.00, // Aryan owes user ₹450
-          lastActivity: 'Midnight Pizza split',
-        ),
-        FriendItem(
-          id: 'friend-2',
-          name: 'Tanya Mehta',
-          avatarInitial: 'T',
-          amountOwed: -220.00, // User owes Tanya ₹220
-          lastActivity: 'Blue Tokai cold brew',
-        ),
-        FriendItem(
-          id: 'friend-3',
-          name: 'Rohan Verma',
-          avatarInitial: 'R',
-          amountOwed: 890.00,
-          lastActivity: 'Elden Ring DLC pass',
-        ),
-      ],
-      groups: [
-        SplitGroup(
-          id: 'grp-1',
-          name: 'Goa Weekend Gang 🏖️',
-          emoji: '🏖️',
-          totalSpend: 18400.00,
-          yourShare: 4600.00,
-          memberNames: ['You', 'Aryan', 'Tanya', 'Rohan'],
-        ),
-        SplitGroup(
-          id: 'grp-2',
-          name: 'Flat 402 Utilities 🏠',
-          emoji: '🏠',
-          totalSpend: 6200.00,
-          yourShare: 2066.00,
-          memberNames: ['You', 'Aryan', 'Sameer'],
-        ),
-      ],
-      emis: [
-        EmiItem(
-          id: 'emi-1',
-          title: 'iPhone 16 Pro (No Cost EMI)',
-          totalAmount: 119900.00,
-          monthlyAmount: 9990.00,
-          paidMonths: 4,
-          totalMonths: 12,
-          nextDueDate: now.add(const Duration(days: 11)),
-          bankName: 'HDFC Bank',
-        ),
-        EmiItem(
-          id: 'emi-2',
-          title: 'Dyson Airwrap Stash',
-          totalAmount: 45900.00,
-          monthlyAmount: 7650.00,
-          paidMonths: 2,
-          totalMonths: 6,
-          nextDueDate: now.add(const Duration(days: 22)),
-          bankName: 'OneCard Metal',
-        ),
-      ],
-      paymentMethods: [
-        PaymentMethodItem(
-          id: 'pm-1',
-          name: 'HDFC Salary Platinum',
-          type: 'Debit',
-          last4Digits: '8492',
-          cardBrand: 'Visa',
-          monthlyLimit: 100000.00,
-          currentSpent: 24500.00,
-          isDefault: true,
-        ),
-        PaymentMethodItem(
-          id: 'pm-2',
-          name: 'OneCard Metal Credit',
-          type: 'Credit',
-          last4Digits: '1923',
-          cardBrand: 'Mastercard',
-          monthlyLimit: 75000.00,
-          currentSpent: 18490.00,
-          isDefault: false,
-        ),
-        PaymentMethodItem(
-          id: 'pm-3',
-          name: 'UPI Primary (sujal@okhdfcbank)',
-          type: 'UPI',
-          last4Digits: 'UPI',
-          cardBrand: 'UPI',
-          monthlyLimit: 50000.00,
-          currentSpent: 9200.00,
-          isDefault: false,
-        ),
-      ],
+  static final Box<dynamic> _box = Hive.box<dynamic>(_financeBoxName);
+
+  static FinanceState _loadState() {
+    try {
+      final raw = _box.get(_financeKey);
+      if (raw == null) return FinanceState.empty();
+      return FinanceState.fromJson(jsonDecode(raw as String)
+          as Map<String, dynamic>);
+    } catch (e) {
+      return FinanceState.empty();
+    }
+  }
+
+  void _persist() {
+    try {
+      _box.put(_financeKey, jsonEncode(state.toJson()));
+    } catch (e) {
+      // Persistence failure should never crash the UI.
+    }
+  }
+
+  /// Marks onboarding as complete after the user enters their own data.
+  void completeSetup({
+    required double monthlyIncome,
+    required double monthlyBudget,
+    AccountItem? firstAccount,
+  }) {
+    var balance = state.totalBalance;
+    var accounts = state.accounts;
+    if (firstAccount != null && firstAccount.name.trim().isNotEmpty) {
+      accounts = [...accounts, firstAccount];
+      balance = firstAccount.balance;
+    }
+    state = state.copyWith(
+      monthlyIncome: monthlyIncome,
+      monthlyBudget: monthlyBudget,
+      totalBalance: balance,
+      accounts: accounts,
+      hasCompletedSetup: true,
     );
+    _persist();
+  }
+
+  void setMonthlyIncome(double income) {
+    state = state.copyWith(monthlyIncome: income);
+    _persist();
   }
 
   void updateMonthlyBudget(double newBudget) {
     state = state.copyWith(monthlyBudget: newBudget);
+    _persist();
   }
 
   void addFriend({
@@ -371,6 +294,7 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
       lastActivity: 'Added recently',
     );
     state = state.copyWith(friends: [...state.friends, newFriend]);
+    _persist();
   }
 
   void settleFriendDebt(String friendId) {
@@ -381,6 +305,7 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
       return f;
     }).toList();
     state = state.copyWith(friends: updated);
+    _persist();
   }
 
   void createGroup({
@@ -398,6 +323,7 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
       memberNames: members,
     );
     state = state.copyWith(groups: [...state.groups, newGroup]);
+    _persist();
   }
 
   void addEmi({
@@ -418,6 +344,7 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
       bankName: bankName,
     );
     state = state.copyWith(emis: [...state.emis, newEmi]);
+    _persist();
   }
 
   void payEmiInstallment(String emiId) {
@@ -428,6 +355,7 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
       return emi;
     }).toList();
     state = state.copyWith(emis: updated);
+    _persist();
   }
 
   void addPaymentMethod({
@@ -447,6 +375,62 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
       currentSpent: 0.0,
     );
     state = state.copyWith(paymentMethods: [...state.paymentMethods, newPm]);
+    _persist();
+  }
+
+  void addAccount({
+    required String name,
+    required String type,
+    String last4 = '',
+    double balance = 0.0,
+    bool isDefault = false,
+  }) {
+    final newAccount = AccountItem(
+      id: 'acc-${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      type: type,
+      last4Digits: last4,
+      balance: balance,
+      isDefault: isDefault,
+    );
+    state = state.copyWith(accounts: [...state.accounts, newAccount]);
+    _persist();
+  }
+
+  void deleteAccount(String id) {
+    state = state.copyWith(
+      accounts: state.accounts.where((a) => a.id != id).toList(),
+    );
+    _persist();
+  }
+
+  void addBudget({
+    required VibeCategory category,
+    required double monthlyLimit,
+  }) {
+    final newBudget = BudgetItem(
+      id: 'budget-${DateTime.now().millisecondsSinceEpoch}',
+      category: category,
+      monthlyLimit: monthlyLimit,
+    );
+    state = state.copyWith(budgets: [...state.budgets, newBudget]);
+    _persist();
+  }
+
+  void updateBudget(String id, double newLimit) {
+    final updated = state.budgets.map((b) {
+      if (b.id == id) return b.copyWith(monthlyLimit: newLimit);
+      return b;
+    }).toList();
+    state = state.copyWith(budgets: updated);
+    _persist();
+  }
+
+  void deleteBudget(String id) {
+    state = state.copyWith(
+      budgets: state.budgets.where((b) => b.id != id).toList(),
+    );
+    _persist();
   }
 
   void addTransaction({
@@ -473,10 +457,20 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
         ? state.totalBalance - amount
         : state.totalBalance + amount;
 
+    final updatedAccounts = state.accounts.map((a) {
+      if (a.name == accountName) {
+        final delta = isExpense ? -amount : amount;
+        return a.copyWith(balance: a.balance + delta);
+      }
+      return a;
+    }).toList();
+
     state = state.copyWith(
       transactions: updatedTransactions,
       totalBalance: updatedBalance,
+      accounts: updatedAccounts,
     );
+    _persist();
   }
 
   void deleteTransaction(String id) {
@@ -486,10 +480,20 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
         ? state.totalBalance + txToDelete.amount
         : state.totalBalance - txToDelete.amount;
 
+    final updatedAccounts = state.accounts.map((a) {
+      if (a.name == txToDelete.accountName) {
+        final delta = txToDelete.isExpense ? txToDelete.amount : -txToDelete.amount;
+        return a.copyWith(balance: a.balance + delta);
+      }
+      return a;
+    }).toList();
+
     state = state.copyWith(
       transactions: updatedList,
       totalBalance: updatedBalance,
+      accounts: updatedAccounts,
     );
+    _persist();
   }
 
   void depositToVault(String vaultId, double amount) {
@@ -506,6 +510,7 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
       vaults: updatedVaults,
       totalBalance: state.totalBalance - amount,
     );
+    _persist();
   }
 
   void createVault({
@@ -526,6 +531,7 @@ class FinanceNotifier extends StateNotifier<FinanceState> {
     state = state.copyWith(
       vaults: [...state.vaults, newVault],
     );
+    _persist();
   }
 }
 

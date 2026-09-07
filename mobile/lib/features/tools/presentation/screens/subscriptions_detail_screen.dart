@@ -185,7 +185,7 @@ class SubscriptionsDetailScreen extends ConsumerWidget {
     final nameCtrl = TextEditingController();
     final amountCtrl = TextEditingController();
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,

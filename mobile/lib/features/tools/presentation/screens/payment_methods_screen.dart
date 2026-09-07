@@ -252,7 +252,7 @@ class PaymentMethodsScreen extends ConsumerWidget {
     final limitCtrl = TextEditingController(text: '50000');
     String type = 'Credit';
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,

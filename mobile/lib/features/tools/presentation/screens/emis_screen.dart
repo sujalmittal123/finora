@@ -237,7 +237,7 @@ class EmisScreen extends ConsumerWidget {
     final monthsCtrl = TextEditingController(text: '6');
     final bankCtrl = TextEditingController(text: 'HDFC Bank');
 
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,

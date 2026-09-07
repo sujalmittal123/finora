@@ -228,7 +228,7 @@ class MainScaffold extends StatelessWidget {
   }
 
   void _showQuantumActionSheet(BuildContext context) {
-    showModalBottomSheet(
+    showModalBottomSheet(useRootNavigator: true, 
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(

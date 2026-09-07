@@ -52,63 +52,75 @@ class ToolsHubScreen extends ConsumerWidget {
               const SizedBox(height: 18),
 
               // ─── Monthly Budget Card (Matching Reference Image 2) ──────────
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceCard,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.glassBorderSubtle),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Monthly budget',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
+              GestureDetector(
+                onTap: () => context.push('/budgets'),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceCard,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppColors.glassBorderSubtle),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Monthly budget',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                        GestureDetector(
-                          onTap: () => _showEditBudgetDialog(context, ref, finance.monthlyBudget),
-                          child: Row(
-                            children: [
-                              Text(
-                                '${currencyFormatter.format(budgetLeft)} left',
-                                style: const TextStyle(
-                                  color: AppColors.neonEmerald,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
+                          GestureDetector(
+                            onTap: () => _showEditBudgetDialog(context, ref, finance.monthlyBudget),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '${currencyFormatter.format(budgetLeft)} left',
+                                  style: const TextStyle(
+                                    color: AppColors.neonEmerald,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Icon(Icons.edit_outlined,
-                                  color: AppColors.neonEmerald, size: 16),
-                            ],
+                                const SizedBox(width: 6),
+                                const Icon(Icons.edit_outlined,
+                                    color: AppColors.neonEmerald, size: 16),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: budgetProgress,
-                        minHeight: 8,
-                        backgroundColor: AppColors.surfaceElevated,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          budgetProgress > 0.85
-                              ? AppColors.neonCrimson
-                              : AppColors.neonEmerald,
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: budgetProgress,
+                          minHeight: 8,
+                          backgroundColor: AppColors.surfaceElevated,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            budgetProgress > 0.85
+                                ? AppColors.neonCrimson
+                                : AppColors.neonEmerald,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Manage category budgets →',
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -245,7 +257,7 @@ class ToolsHubScreen extends ConsumerWidget {
   void _showEditBudgetDialog(
       BuildContext context, WidgetRef ref, double currentBudget) {
     final ctrl = TextEditingController(text: currentBudget.toStringAsFixed(0));
-    showDialog(
+    showDialog(useRootNavigator: true, 
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
