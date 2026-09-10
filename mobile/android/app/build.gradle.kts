@@ -19,7 +19,16 @@ if (keyPropertiesFile.exists()) {
 android {
     namespace = "in.finora.app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+
+    // Use pre-installed NDK if available to avoid downloading and unzipping NDK on CI
+    val ndkHome = System.getenv("ANDROID_NDK_HOME")
+    val ndkDir = File(System.getenv("ANDROID_SDK_ROOT") ?: System.getenv("ANDROID_HOME") ?: "", "ndk")
+    val installedNdk = when {
+        !ndkHome.isNullOrBlank() -> File(ndkHome).name
+        ndkDir.exists() -> ndkDir.listFiles()?.filter { it.isDirectory }?.map { it.name }?.sortedDescending()?.firstOrNull()
+        else -> null
+    }
+    ndkVersion = installedNdk ?: flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

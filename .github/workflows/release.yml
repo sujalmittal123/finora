@@ -1,25 +1,110 @@
-name: "\U0001F680 Release \u2014 Build APK & AAB"
+name: "🚀 Release — Build APK & AAB"
 
-# TRIGGERS:
-#  1. Push a git tag (v1.2.3)     → builds & publishes that version
-#  2. Push to master              → auto-detects version from pubspec.yaml
-#  3. Manual workflow_dispatch    → optional tag override, else reads pubspec.yaml
 on:
   push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
     branches:
       - master
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Version tag override (e.g. v1.2.0). Leave blank to auto-detect from pubspec.yaml.'
+      force_release:
+        description: 'Force release build even if version check indicates no bump'
         required: false
-        default: ''
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
 
 jobs:
-  build-android:
-    name: Build Android Release
+  check-version:
+    name: Check Version Bump
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.SHOULD_RELEASE }}
+      version: ${{ steps.check.outputs.VERSION }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify version bump
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 1. Read current version from mobile/pubspec.yaml
+          CURRENT_VERSION=$(grep '^version:' mobile/pubspec.yaml | head -n1 | sed -E 's/version:[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          TAG_NAME="v${CURRENT_VERSION}"
+          echo "Current version in pubspec.yaml: ${CURRENT_VERSION} (${TAG_NAME})"
+
+          # Handle manual workflow dispatch with force_release
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force_release }}" = "true" ]; then
+            echo "Manual dispatch with force_release=true. Proceeding with build."
+            echo "SHOULD_RELEASE=true" >> "$GITHUB_OUTPUT"
+            echo "VERSION=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Handle git tag push (e.g. v1.2.0)
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            PUSHED_TAG="${GITHUB_REF#refs/tags/}"
+            echo "Triggered by tag push: ${PUSHED_TAG}. Proceeding with build."
+            echo "SHOULD_RELEASE=true" >> "$GITHUB_OUTPUT"
+            echo "VERSION=${PUSHED_TAG}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # 2. Check if git tag or GitHub release already exists
+          git fetch --tags --force 2>/dev/null || true
+          TAG_EXISTS=false
+          if git rev-parse "refs/tags/${TAG_NAME}" >/dev/null 2>&1; then
+            echo "Git tag ${TAG_NAME} already exists."
+            TAG_EXISTS=true
+          fi
+
+          RELEASE_EXISTS=false
+          if gh release view "${TAG_NAME}" >/dev/null 2>&1; then
+            echo "GitHub release ${TAG_NAME} already exists."
+            RELEASE_EXISTS=true
+          fi
+
+          # 3. Check if version was changed in this push
+          VERSION_CHANGED=true
+          if [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            PREV_VERSION=$(git show "${{ github.event.before }}:mobile/pubspec.yaml" 2>/dev/null | grep '^version:' | head -n1 | sed -E 's/version:[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/' || true)
+            echo "Previous commit version: ${PREV_VERSION:-unknown}"
+            if [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" = "$CURRENT_VERSION" ]; then
+              echo "Version was not bumped in this push (remains ${CURRENT_VERSION})."
+              VERSION_CHANGED=false
+            fi
+          fi
+
+          # 4. Decide whether to trigger release build
+          if [ "$RELEASE_EXISTS" = "true" ]; then
+            echo "::notice ::Release ${TAG_NAME} already exists on GitHub Releases. Skipping build."
+            echo "SHOULD_RELEASE=false" >> "$GITHUB_OUTPUT"
+            echo "VERSION=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          elif [ "$TAG_EXISTS" = "true" ]; then
+            echo "::notice ::Tag ${TAG_NAME} already exists in git. Skipping build."
+            echo "SHOULD_RELEASE=false" >> "$GITHUB_OUTPUT"
+            echo "VERSION=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          elif [ "$VERSION_CHANGED" = "false" ]; then
+            echo "::notice ::Version has not been bumped in mobile/pubspec.yaml. Skipping build."
+            echo "SHOULD_RELEASE=false" >> "$GITHUB_OUTPUT"
+            echo "VERSION=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Version successfully bumped to ${TAG_NAME}! Triggering release build."
+            echo "SHOULD_RELEASE=true" >> "$GITHUB_OUTPUT"
+            echo "VERSION=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    name: Build & Publish Release (${{ needs.check-version.outputs.version }})
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -28,13 +113,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Point to runner's pre-installed NDK so Gradle does NOT download or unzip NDK
+      - name: Configure Pre-installed Android NDK
+        run: |
+          if [ -d "$ANDROID_SDK_ROOT/ndk" ]; then
+            PREINSTALLED_NDK=$(ls -1d $ANDROID_SDK_ROOT/ndk/* 2>/dev/null | sort -V | tail -n 1)
+            if [ -n "$PREINSTALLED_NDK" ]; then
+              echo "Using pre-installed Android NDK: $PREINSTALLED_NDK"
+              echo "ANDROID_NDK_HOME=$PREINSTALLED_NDK" >> "$GITHUB_ENV"
+              echo "ANDROID_NDK_ROOT=$PREINSTALLED_NDK" >> "$GITHUB_ENV"
+            fi
+          fi
+
       - name: Set up Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
 
-      - name: Set up Flutter (latest stable)
+      - name: Set up Flutter (stable)
         uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -56,23 +154,6 @@ jobs:
       - name: Write google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > mobile/android/app/google-services.json
 
-      # Resolve version — Priority: manual input > git tag > pubspec.yaml
-      - name: Resolve version
-        id: version
-        run: |
-          if [ -n "${{ github.event.inputs.tag }}" ]; then
-            RAW="${{ github.event.inputs.tag }}"
-          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            RAW="${GITHUB_REF#refs/tags/}"
-          else
-            RAW=$(grep '^version:' mobile/pubspec.yaml | head -n1 \
-                  | sed -E 's/version:[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/v\1/')
-          fi
-          [[ "$RAW" != v* ]] && RAW="v${RAW}"
-          VERSION="${RAW//\//-}"
-          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Resolved version: ${VERSION}"
-
       - name: Flutter pub get
         working-directory: mobile
         run: flutter pub get
@@ -93,9 +174,9 @@ jobs:
             --obfuscate \
             --split-debug-info=build/debug-info
 
-      - name: Rename artifacts with version
+      - name: Prepare release artifacts
         run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
+          VERSION="${{ needs.check-version.outputs.version }}"
           cp mobile/build/app/outputs/flutter-apk/app-release.apk "finora-${VERSION}.apk"
           cp mobile/build/app/outputs/bundle/release/app-release.aab "finora-${VERSION}.aab"
           ls -lh "finora-${VERSION}.apk" "finora-${VERSION}.aab"
@@ -103,35 +184,35 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.VERSION }}
-          name: "Finora ${{ steps.version.outputs.VERSION }}"
+          tag_name: ${{ needs.check-version.outputs.version }}
+          name: "Finora ${{ needs.check-version.outputs.version }}"
           target_commitish: ${{ github.sha }}
           make_latest: true
           body: |
-            ## Finora ${{ steps.version.outputs.VERSION }}
+            ## Finora ${{ needs.check-version.outputs.version }}
 
             ### Downloads
             | File | Description |
             |------|-------------|
-            | `finora-${{ steps.version.outputs.VERSION }}.apk` | Android APK (direct install) |
-            | `finora-${{ steps.version.outputs.VERSION }}.aab` | Android App Bundle (Play Store) |
+            | `finora-${{ needs.check-version.outputs.version }}.apk` | Android APK (direct install) |
+            | `finora-${{ needs.check-version.outputs.version }}.aab` | Android App Bundle (Google Play Store) |
           draft: false
           prerelease: false
           files: |
-            finora-${{ steps.version.outputs.VERSION }}.apk
-            finora-${{ steps.version.outputs.VERSION }}.aab
+            finora-${{ needs.check-version.outputs.version }}.apk
+            finora-${{ needs.check-version.outputs.version }}.aab
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload APK to workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: finora-${{ steps.version.outputs.VERSION }}-apk
-          path: finora-${{ steps.version.outputs.VERSION }}.apk
+          name: finora-${{ needs.check-version.outputs.version }}-apk
+          path: finora-${{ needs.check-version.outputs.version }}.apk
           retention-days: 30
 
       - name: Upload AAB to workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: finora-${{ steps.version.outputs.VERSION }}-aab
-          path: finora-${{ steps.version.outputs.VERSION }}.aab
+          name: finora-${{ needs.check-version.outputs.version }}-aab
+          path: finora-${{ needs.check-version.outputs.version }}.aab
           retention-days: 30
